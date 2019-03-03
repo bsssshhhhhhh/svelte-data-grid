@@ -30,6 +30,7 @@
     <div class="grid-space" style="width: {gridSpaceWidth}px; height: {gridSpaceHeight}px;"></div>
     
     <!-- Loop through the visible rows and display the data-->
+    <!-- Scrolling seems to perform better when not using a keyed each block -->
     {#each visibleRows as row, i}
       <div class="grid-row" style="top: {getRowTop(row.i, rowHeight)}px; height: {rowHeight}px; width: {gridSpaceWidth}px;" role="row" aria-rowindex="{row.i}">
         {#each columns as column, j}
@@ -241,7 +242,6 @@ export default {
       // if user is no longer pressing the left mouse button and we are out of sync
       // with __columnDragging because mouseup didn't fire, finish the reorder
       if (event.which !== 1) {
-        console.log(event.which);
         this.onColumnDragEnd(event);
         return;
       }
@@ -282,7 +282,7 @@ export default {
       const newIdx = getClosestIndex(offsetPoint, columnWidths);
       columns.splice(newIdx > __columnIndexBeingDragged ? newIdx - 1 : newIdx, 0, columns.splice(__columnIndexBeingDragged, 1)[0]);
       
-      // delay firing of event so that new column order is accessible when handlers are fired
+      // delay firing of event so that new column order is accessible when handlers are called
       setTimeout(() => this.fire('columnOrderUpdated'), 0);
 
       this.set({
@@ -329,8 +329,9 @@ export default {
       const resizeLineLeft = event.pageX - wrapperPageX;
       const columnLeft = getCellLeft(__columnIndexBeingResized, columnWidths);
       const resizeLineMinLeft = columnLeft - __scrollLeft + MIN_COLUMN_SIZE;
-
-      columns[__columnIndexBeingResized].width = Math.max((resizeLineLeft + __scrollLeft) - columnLeft, MIN_COLUMN_SIZE);
+      const newColumnWidth = Math.max((resizeLineLeft + __scrollLeft) - columnLeft, MIN_COLUMN_SIZE);
+      // thanks to the virtual list, we're able to get away with setting the column's size while the mouse moves
+      columns[__columnIndexBeingResized].width = newColumnWidth;
 
       const obj = {
         __columnActionLineLeft: Math.max(resizeLineLeft, resizeLineMinLeft),
@@ -343,7 +344,10 @@ export default {
         obj.__columnIndexBeingResized = null;
 
         // delay firing the event until the next frame to guarantee that new values will be available in component.get()
-        setTimeout(() => this.fire('columnWidthUpdated'), 0);
+        setTimeout(() => this.fire('columnWidthUpdated', {
+          idx: __columnIndexBeingResized,
+          width: newColumnWidth
+        }), 0);
       }
 
       this.set(obj);
@@ -400,6 +404,7 @@ export default {
      * Array of column widths
      */
     columnWidths: ({ columns }) => {
+      // if width was not provided for this column, give it a default value
       return columns.map(x => x.width || MIN_COLUMN_SIZE);
     },
 
