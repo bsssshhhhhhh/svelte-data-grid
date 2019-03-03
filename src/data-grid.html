@@ -1,0 +1,577 @@
+<svelte:window on:mouseup="onMouseUp(event)" on:mousemove="onMouseMove(event)" />
+<div class="data-grid-wrapper { __resizing || __columnDragging ? 'resizing' : '' }" style="padding-top: {rowHeight}px;" ref:wrapper role="table">
+  {#if __resizing || __columnDragging}
+    <div class="column-action-line" style="left: {__columnActionLineLeft - 2}px;"></div>
+  {/if}
+
+  <div class="grid-headers" style="height: {rowHeight}px;" rolw="rowgroup">
+    <!-- We link up the horizontal scrolling of the inner grid view with the sticky header row by making the
+      -- header row width 100% of the container, and using position:absolute along with 'left' to
+      -- control the 'scroll' of the header row -->
+    <div class="grid-header-row" style="left: -{__scrollLeft}px; height: {rowHeight}px; width: {gridSpaceWidth}px;" role="row">
+      {#each columns as column, i (i)}
+        <div class="grid-cell" on:mousedown="onColumnDragStart(event, i)" style="left: {getCellLeft(i, columnWidths)}px; width: {columnWidths[i]}px; line-height: {rowHeight}px;" title={column.display || ''} use:dragCopy="allowColumnReordering" role="columnheader">
+          {#if column.headerComponent}
+            <svelte:component this={column.headerComponent} column={column} />
+          {:else}
+            <div class="cell-default">
+              {column.display || ''}
+            </div>
+          {/if}
+        </div>
+        {#if allowResizeFromTableHeaders}
+          <div class="grid-cell-size-capture" style="left: {getCellLeft(i+1, columnWidths) - Math.floor(__columnHeaderResizeCaptureWidth / 2)}px; width: {__columnHeaderResizeCaptureWidth}px;" on:mousedown="onColumnResizeStart(event, i)"></div>
+        {/if}
+      {/each}
+    </div>
+  </div>
+  <div class="grid-inner" ref:tableSpace bind:offsetHeight="__innerOffsetHeight" on:scroll="onScroll(event)" style="height: calc(100% );" role="rowgroup">
+    <!-- We need an element to take up space so our scrollbars appear-->
+    <div class="grid-space" style="width: {gridSpaceWidth}px; height: {gridSpaceHeight}px;"></div>
+    
+    <!-- Loop through the visible rows and display the data-->
+    {#each visibleRows as row, i}
+      <div class="grid-row" style="top: {getRowTop(row.i, rowHeight)}px; height: {rowHeight}px; width: {gridSpaceWidth}px;" role="row" aria-rowindex="{row.i}">
+        {#each columns as column, j}
+          <div class="grid-cell" style="left: {getCellLeft(j, columnWidths)}px; height: {rowHeight}px; line-height: {rowHeight}px; width: {columnWidths[j]}px;" role="cell">
+            {#if column.cellComponent}
+              <svelte:component this={column.cellComponent} rowNumber={row.i} column={column} row={row} />
+            {:else}
+            <div class="cell-default">
+              {row.data[column.dataName] || ''}
+            </div>
+              
+            {/if}
+          </div>
+          {#if allowResizeFromTableCells}
+            <div class="grid-cell-size-capture" style="left: {getCellLeft(j+1, columnWidths) - Math.floor(__columnHeaderResizeCaptureWidth / 2)}px; width: {__columnHeaderResizeCaptureWidth}px;" on:mousedown="onColumnResizeStart(event, j)"></div>
+          {/if}
+        {/each}
+      </div>
+    {/each}
+  </div>
+</div>
+
+<script>
+
+const MIN_COLUMN_SIZE = 30;
+
+/**
+ * Computes the 'left' value for a grid-cell.
+ * @param {Number} i The cell index
+ * @param {Array} columnWidths The array of column widths in order
+ * @returns {Number}
+ */
+function getCellLeft(i, columnWidths) {
+  let left = 0;
+  for (let j = 0; j < i; j++) {
+    left += columnWidths[j];
+  }
+  return left;
+}
+
+function getClosestIndex(x, columnWidths) {
+  let closest = 0;
+  for (let i = 0; i < columnWidths.length; i++) {
+    const left = getCellLeft(i, columnWidths);
+    if (left < x ) {
+      closest = i+1;
+    }
+  }
+
+  return closest;
+
+}
+
+export default {
+  data() {
+    return {
+      rows: [],                             // Rows to display
+      columns: [],                          // Array of column definitions: { display: '', dataName: ''}, where display is what the display value is and dataName is what the key on the row object is
+      rowHeight: 24,                        // Row height in pixels
+      allowResizeFromTableCells: false,     // Allow the user to click on table cell borders to resize columns
+      allowResizeFromTableHeaders: true,    // Allow the user to clikc on table header borders to resize columns
+      allowColumnReordering: true,          // Allow the user to drag column headers to reorder columns
+
+      __extraRows: 0,                       // Number of extra rows to render beyond what is visible in the scrollable area
+      __columnHeaderResizeCaptureWidth: 20, // The width of the area on column borders that can be clicked to resize the column
+
+      /**** Do not modify any of the data variables below ****/
+      __columnDragging: false,              // DO NOT MODIFY DIRECTLY. Whether a column is being dragged
+      __columnIndexBeingDragged: null,      // DO NOT MODIFY DIRECTLY. The column index that is being dragged
+      __columnDragOffsetX: 0,               // DO NOT MODIFY DIRECTLY. The X offset of where the user clicked on the column header
+      __resizing: false,                    // DO NOT MODIFY DIRECTLY. Whether or not a column is currently being resized
+      __columnIndexBeingResized: null,      // DO NOT MODIFY DIRECTLY. The column index being resized
+      __columnActionLineLeft: 0,            // DO NOT MODIFY DIRECTLY. The 'left' position of the action line
+      __innerOffsetHeight: 0,               // DO NOT MODIFY DIRECTLY. The height of the scrollable area on screen
+      __scrollTop: 0,                       // DO NOT MODIFY DIRECTLY. The scrollTop position of the scrollable area
+      __scrollLeft: 0,                      // DO NOT MODIFY DIRECTLY The scrollLeft position of the scrollable area
+      
+    };
+  },
+  actions: {
+    /**
+     * This action creates a half-opaque 'ghost' column header to visualize dragging a column into a different position
+     * This is put in an action because ultimately the ghost image has nothing to do with the actual column index move
+     */
+    dragCopy(node, enabled) {
+      let copy = null;
+      let dragging = false;
+      let offsetX = 0;
+
+      function onWindowMouseMove(event) {
+        if (!dragging) {
+          return;
+        }
+        copy.style.left = (event.screenX - offsetX) + 'px';
+      }
+
+      function onWindowMouseUp(event) {
+        if (!dragging || event.which !== 1) {
+          return;
+        }
+
+        dragging = false;
+        document.body.removeChild(copy);
+        copy = null;
+      }
+
+      function onNodeMouseDown(event) {
+        if (event.which !== 1) {
+          return;
+        }
+
+        dragging = true;
+        if (copy) {
+          document.body.removeChild(copy);
+        }
+
+        copy = createCopy();
+        offsetX = event.offsetX;
+        copy.style.top = node.getBoundingClientRect().top + 'px';
+        copy.style.left = (event.screenX - offsetX) + 'px';
+        document.body.appendChild(copy);
+      }
+
+      function createCopy() {
+        const copy = document.createElement('div');
+        copy.innerHTML = node.innerHTML;
+        const { width, height, textAlign, fontWeight } = getComputedStyle(node);
+        copy.style.width = width;
+        copy.style.height = height;
+        copy.style.textAlign = textAlign;
+        copy.style.fontWeight = fontWeight;
+        copy.style.position = 'absolute';
+        copy.style.opacity = '0.5';
+        copy.style.pointerEvents = 'none';
+        copy.style.overflow = 'hidden';
+        copy.style.background = '#dddddd';
+        copy.style['z-index'] = '99999';
+
+        return copy;
+      }
+
+      function attachEvents() {
+        window.addEventListener('mousemove', onWindowMouseMove);
+        window.addEventListener('mouseup', onWindowMouseUp);
+        node.addEventListener('mousedown', onNodeMouseDown);
+      }
+
+      function detachEvents() {
+        window.removeEventListener('mousemove', onWindowMouseMove);
+        window.removeEventListener('mouseup', onWindowMouseUp);
+        node.removeEventListener('mousedown', onNodeMouseDown);
+      }
+      if (enabled) {
+        attachEvents();
+      }
+
+      return {
+        destroy() {
+          detachEvents();
+        },
+        update(enabled) {
+          if (enabled) {
+            attachEvents();
+          } else {
+            detachEvents();
+          }
+        }
+      }
+    }
+  },
+  methods: {
+    onMouseMove(event) {
+      this.onColumnDragMouseMove(event);
+      this.onColumnResizeMouseMove(event);
+    },
+    onMouseUp(event) {
+      this.onColumnDragEnd(event);
+      this.onColumnResizeEnd(event);
+    },
+
+    /**
+     * Event handler for column dragging
+     */
+    onColumnDragStart(event, columnIndex) {
+      if (event.which !== 1) {
+        return;
+      }
+
+      const { columnWidths, __scrollLeft, allowColumnReordering } = this.get();
+      
+      // if the developer has disabled column reordering, don't begin a reorder
+      if (!allowColumnReordering) {
+        return;
+      }
+
+      this.set({
+        __columnDragging: true,
+        __columnIndexBeingDragged: columnIndex,
+        __columnDragOffsetX: event.offsetX,
+        __columnActionLineLeft: getCellLeft(columnIndex, columnWidths) - __scrollLeft
+      });
+    },
+    onColumnDragMouseMove(event) {
+      const { __columnDragging, __columnDragOffsetX, __scrollLeft, __columnActionLineLeft, columnWidths } = this.get();
+      if (!__columnDragging) {
+        return;
+      }
+
+      // if user is no longer pressing the left mouse button and we are out of sync
+      // with __columnDragging because mouseup didn't fire, finish the reorder
+      if (event.which !== 1) {
+        console.log(event.which);
+        this.onColumnDragEnd(event);
+        return;
+      }
+
+
+      const { left: wrapperPageX } = this.refs.wrapper.getBoundingClientRect();
+
+      // change the position of the action line to the closest column index under the mouse
+      const offsetPoint = event.screenX - wrapperPageX + __scrollLeft - __columnDragOffsetX;
+      const idx = getClosestIndex(offsetPoint, columnWidths);
+      
+      this.set({
+        __columnActionLineLeft: getCellLeft(idx, columnWidths) - __scrollLeft
+      });
+    },
+
+    /**
+     * Window mouseup handler for column dragging
+     */
+    onColumnDragEnd(event) {
+      const { __columnIndexBeingDragged, __scrollLeft, columnWidths, columns, __columnDragging, __columnDragOffsetX } = this.get();
+
+      // user might try to be clever and middle-click to scroll horizontally while dragging a column
+      // don't stop the drag for middle clicks
+      if (event.which !== 1) {
+        return;
+      }
+
+      // if a column isn't being dragged, don't reorder anything
+      if (!__columnDragging) {
+        return;
+      }
+
+      const { left: wrapperPageX } = this.refs.wrapper.getBoundingClientRect();
+      const offsetPoint = event.screenX - wrapperPageX + __scrollLeft - __columnDragOffsetX;
+
+      // move column object to its new position in the array based off the mouse position and scroll position
+      const newIdx = getClosestIndex(offsetPoint, columnWidths);
+      columns.splice(newIdx > __columnIndexBeingDragged ? newIdx - 1 : newIdx, 0, columns.splice(__columnIndexBeingDragged, 1)[0]);
+      
+      // delay firing of event so that new column order is accessible when handlers are fired
+      setTimeout(() => this.fire('columnOrderUpdated'), 0);
+
+      this.set({
+        __columnDragging: false,
+        columns,
+        __columnDragOffsetX: 0,
+        __columnIndexBeingDragged: null
+      });
+    },
+
+    /**
+     * Mousedown handler for column resizing
+     */
+    onColumnResizeStart(event, columnIndex) {
+      // left click only
+      if (event.which !== 1) {
+        return;
+      }
+      const { left: wrapperPageX } = this.refs.wrapper.getBoundingClientRect();
+      const { __scrollLeft } = this.get();
+
+      this.set({
+        __resizing: true,
+        __columnActionLineLeft: event.screenX - wrapperPageX - __scrollLeft,
+        __columnIndexBeingResized: columnIndex
+      });
+
+      event.stopPropagation();
+    },
+
+    /**
+     * Mousemove handler for column resizing
+     */
+    onColumnResizeMouseMove(event) {
+      const { __resizing, __columnIndexBeingResized, columnWidths, __scrollLeft, __columnActionLineLeft, columns } = this.get();
+
+      // if not currently resizing a column, ignore the event
+      if (!__resizing) {
+        return;
+      }
+
+      const { left: wrapperPageX } = this.refs.wrapper.getBoundingClientRect();
+
+      const resizeLineLeft = event.screenX - wrapperPageX;
+      const columnLeft = getCellLeft(__columnIndexBeingResized, columnWidths);
+      const resizeLineMinLeft = columnLeft - __scrollLeft + MIN_COLUMN_SIZE;
+
+      columns[__columnIndexBeingResized].width = Math.max((resizeLineLeft + __scrollLeft) - columnLeft, MIN_COLUMN_SIZE);
+
+      const obj = {
+        __columnActionLineLeft: Math.max(resizeLineLeft, resizeLineMinLeft),
+        columns
+      };
+      
+      // If mouseup was not fired for some reason, abort the resize
+      if (event.which !== 1) {        
+        obj.__resizing = false;
+        obj.__columnIndexBeingResized = null;
+
+        // delay firing the event until the next frame to guarantee that new values will be available in component.get()
+        setTimeout(() => this.fire('columnWidthUpdated'), 0);
+      }
+
+      this.set(obj);
+      
+      // if still resizing and the user does not have the left mouse button depressed,
+      // the mouseup event didn't fire for some reason, so turn off the resize mode
+      
+    },
+
+    /**
+     * Mouseup handler for column resizing
+     */
+    onColumnResizeEnd(event) {
+      const { __resizing } = this.get();
+      if (!__resizing) {
+        return;
+      }
+      
+      this.fire('columnWidthUpdated');
+      this.set({
+        __resizing: false,
+        __columnIndexBeingResized: null
+      });
+    },
+
+    /**
+     * Sets updated scroll values when the scrollable area is scrolled
+     */
+    onScroll(event) {
+      const obj = {};
+      // get current saved scroll values
+      const { __scrollTop, __scrollLeft } = this.get();
+
+      // get new scroll values from the scroll area
+      const { scrollTop: newScrollTop, scrollLeft: newScrollLeft } = this.refs.tableSpace;
+
+      /* 
+       * To avoid doing unnecessary re-calculation of computed variables, don't set the scroll
+       * properties that haven't changed
+       */
+      if (__scrollTop !== newScrollTop) {
+        obj.__scrollTop = newScrollTop;
+      }
+
+      if (__scrollLeft !== newScrollLeft) {
+        obj.__scrollLeft = newScrollLeft;
+      }
+
+      this.set(obj);
+    }
+  },
+  computed: {
+    /**
+     * Array of column widths
+     */
+    columnWidths: ({ columns }) => {
+      return columns.map(x => x.width || MIN_COLUMN_SIZE);
+    },
+
+    /**
+     * The number of rows we have
+     */
+    numRows: ({ rows }) => {
+      return rows.length;
+    },
+
+    /**
+     * Width of the overall grid space
+     */
+    gridSpaceWidth: ({ columnWidths }) => {
+      let sum = 0;
+      for (let i = 0; i < columnWidths.length; i++) {
+        sum += columnWidths[i];
+      }
+
+      return sum;
+    },
+
+    /**
+     * Height of the overall grid space
+     */
+    gridSpaceHeight: ({ rowHeight, numRows }) => {
+      return rowHeight * numRows;
+    },
+
+    /**
+     * Number of rows to render in the viewport
+     */
+    numRowsInViewport: ({ __innerOffsetHeight, rowHeight }) => {
+      return Math.ceil(__innerOffsetHeight / rowHeight);
+    },
+
+    /**
+     * Computes which rows should be visible
+     */
+    visibleRows: ({ rowHeight, rows, __scrollTop, numRowsInViewport, __extraRows }) => {
+      const start = Math.max(0, Math.floor((__scrollTop / rowHeight) - (__extraRows / 2)));
+      const end = start + numRowsInViewport + __extraRows;
+
+      return rows.slice(start, end).map((x, i) => {
+        return {
+          i: i + start, // for aria-rowindex
+          data: x       // the row data
+        };
+      });
+    }
+  },
+
+  helpers: {
+    /**
+     * Gets the 'top' value for a grid-row
+     */
+    getRowTop: function(i, rowHeight) {
+      return i * rowHeight;
+    },
+
+    getCellLeft
+  }
+};
+</script>
+
+
+<style>
+
+.resizing * {
+  user-select: none;
+}
+
+.resizing .grid-inner {
+  overflow-y: hidden;
+}
+
+.resizing .grid-space {
+  pointer-events: all;
+}
+
+.cell-default {
+  padding: 0 5px;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.data-grid-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.column-action-line {
+  position: absolute;
+  top: 0;
+  bottom: 17px;
+  z-index: 3;
+  width: 4px;
+  background: #aaa;
+  cursor: ew-resize;
+}
+
+.grid-cell-size-capture {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 5;
+  background: transparent;
+  cursor: ew-resize;
+}
+
+.grid-inner {
+  overflow: auto;
+}
+
+.grid-space {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: transparent;
+  pointer-events: none;
+
+  z-index: 1;
+}
+
+.grid-headers {
+  position: absolute;
+  overflow: hidden;
+  max-width: 100%;
+  width: 100%;
+  top: 0;
+  left: 0;
+  border-bottom: 2px solid black;
+}
+
+.grid-headers .grid-cell {
+  text-align: center;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.grid-headers .grid-cell:hover {
+  background: #eee;
+}
+
+.grid-header-row {
+  position: absolute;
+  overflow: hidden;
+  top: 0;
+  
+}
+
+.grid-row {
+  position: absolute;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.grid-row:not(:last-child) {
+  border-bottom: 1px solid #ccc;
+}
+
+.grid-cell {
+  position: absolute;
+  top: 0;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.grid-cell:not(:last-child) {
+  border-right: 1px solid #ccc;
+}
+</style>

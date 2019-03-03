@@ -1,0 +1,23 @@
+{
+  "name": "svelte-data-grid",
+  "svelte": "src/data-grid.html",
+  "module": "data-grid.mjs",
+  "main": "data-grid.js",
+  "scripts": {
+    "build": "rollup -c",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "rollup": "^0.67.4",
+    "rollup-plugin-svelte": "^4.4.0",
+    "svelte": "^2.15.3"
+  },
+  "keywords": [
+    "svelte"
+  ],
+  "files": [
+    "src",
+    "index.mjs",
+    "index.js"
+  ]
+}
