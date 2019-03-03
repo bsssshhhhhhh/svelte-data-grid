@@ -123,7 +123,7 @@ export default {
         if (!dragging) {
           return;
         }
-        copy.style.left = (event.screenX - offsetX) + 'px';
+        copy.style.left = (event.pageX - offsetX) + 'px';
       }
 
       function onWindowMouseUp(event) {
@@ -149,7 +149,7 @@ export default {
         copy = createCopy();
         offsetX = event.offsetX;
         copy.style.top = node.getBoundingClientRect().top + 'px';
-        copy.style.left = (event.screenX - offsetX) + 'px';
+        copy.style.left = (event.pageX - offsetX) + 'px';
         document.body.appendChild(copy);
       }
 
@@ -250,7 +250,7 @@ export default {
       const { left: wrapperPageX } = this.refs.wrapper.getBoundingClientRect();
 
       // change the position of the action line to the closest column index under the mouse
-      const offsetPoint = event.screenX - wrapperPageX + __scrollLeft - __columnDragOffsetX;
+      const offsetPoint = event.pageX - wrapperPageX + __scrollLeft - __columnDragOffsetX;
       const idx = getClosestIndex(offsetPoint, columnWidths);
       
       this.set({
@@ -276,7 +276,7 @@ export default {
       }
 
       const { left: wrapperPageX } = this.refs.wrapper.getBoundingClientRect();
-      const offsetPoint = event.screenX - wrapperPageX + __scrollLeft - __columnDragOffsetX;
+      const offsetPoint = event.pageX - wrapperPageX + __scrollLeft - __columnDragOffsetX;
 
       // move column object to its new position in the array based off the mouse position and scroll position
       const newIdx = getClosestIndex(offsetPoint, columnWidths);
@@ -306,7 +306,7 @@ export default {
 
       this.set({
         __resizing: true,
-        __columnActionLineLeft: event.screenX - wrapperPageX - __scrollLeft,
+        __columnActionLineLeft: event.pageX - wrapperPageX - __scrollLeft,
         __columnIndexBeingResized: columnIndex
       });
 
@@ -326,7 +326,7 @@ export default {
 
       const { left: wrapperPageX } = this.refs.wrapper.getBoundingClientRect();
 
-      const resizeLineLeft = event.screenX - wrapperPageX;
+      const resizeLineLeft = event.pageX - wrapperPageX;
       const columnLeft = getCellLeft(__columnIndexBeingResized, columnWidths);
       const resizeLineMinLeft = columnLeft - __scrollLeft + MIN_COLUMN_SIZE;
 
