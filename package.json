@@ -1,6 +1,13 @@
 {
   "name": "svelte-data-grid",
   "svelte": "src/data-grid.html",
+  "version": "1.0.0",
+  "author": {
+    "name": "Brian Simon",
+    "email": "bsssshhhhhhh@gmail.com",
+    "url": "https://github.com/bsssshhhhhhh"
+  },
+  "homepage": "https://github.com/bsssshhhhhhh/svelte-data-grid",
   "module": "data-grid.mjs",
   "main": "data-grid.js",
   "scripts": {
@@ -13,8 +20,11 @@
     "svelte": "^2.15.3"
   },
   "keywords": [
-    "svelte"
+    "svelte",
+    "virtual-list"
   ],
+  "repository": "bsssshhhhhhh/svelte-data-grid",
+  "license": "MIT",
   "files": [
     "src",
     "index.mjs",
