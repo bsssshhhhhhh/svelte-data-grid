@@ -29,6 +29,11 @@
     <!-- We need an element to take up space so our scrollbars appear-->
     <div class="grid-space" style="width: {gridSpaceWidth}px; height: {gridSpaceHeight}px;"></div>
     
+    {#if allowResizeFromTableCells}
+      {#each columns as columns, i}
+        <div class="grid-cell-size-capture" style="left: {getCellLeft(i+1, columnWidths) - Math.floor(__columnHeaderResizeCaptureWidth / 2)}px; width: {__columnHeaderResizeCaptureWidth}px;" on:mousedown="onColumnResizeStart(event, i)"></div>
+      {/each}
+    {/if}
     <!-- Loop through the visible rows and display the data-->
     <!-- Scrolling seems to perform better when not using a keyed each block -->
     {#each visibleRows as row, i}
@@ -44,9 +49,6 @@
               
             {/if}
           </div>
-          {#if allowResizeFromTableCells}
-            <div class="grid-cell-size-capture" style="left: {getCellLeft(j+1, columnWidths) - Math.floor(__columnHeaderResizeCaptureWidth / 2)}px; width: {__columnHeaderResizeCaptureWidth}px;" on:mousedown="onColumnResizeStart(event, j)"></div>
-          {/if}
         {/each}
       </div>
     {/each}
