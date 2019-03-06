@@ -91,7 +91,7 @@ Components will be passed the following properties:
 
 MyCustomCell.html
 ```
-<div style="color: {colors[row[column.dataName]] || 'black'}>
+<div style="color: {colors[row[column.dataName]] || 'black'};">
   {row[column.dataName]}
 </div>
 
