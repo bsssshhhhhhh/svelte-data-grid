@@ -1,4 +1,4 @@
-![npm](https://img.shields.io/npm/v/svelte-data-grid.svg?style=flat-square)
+[![npm](https://img.shields.io/npm/v/svelte-data-grid.svg?style=flat-square)](https://npmjs.org/package/svelte-data-grid)
 
 # Svelte Data Grid
 
@@ -80,6 +80,55 @@ DataGrid requires 2 properties to be passed in order to display data: `rows` and
 
 ```
 
+## Custom Cell Components
+
+Need to customize how your data is displayed or build more complex functionality into your grid? Specify `cellComponent` in your definition in the `columns` property.
+
+Components will be passed the following properties: 
+- `rowNumber` - The index of the row within `rows`
+- `row` - The entire row object from `rows`
+- `column` - The entire column object from `columns`
+
+
+MyCustomCell.html
+```
+<div style="color: {colors[row[column.dataName]] || 'black'}>
+  {row[column.dataName]}
+</div>
+
+<script>
+export default {
+  data() {
+    return {
+      colors: {
+        Red: '#FF0000',
+        Blue: '#0000FF'
+      }
+    };
+  }
+};
+</script>
+```
+
+Import the component
+```
+import MyCustomCell from './MyCustomCell.html';
+```
+
+`columns` option:
+```
+[
+  {
+    display: 'Fruit Color'
+    dataName: 'fruitColor',
+    width: 300,
+    cellComponent: MyCustomCell
+  }
+]
+```
+
+## Custom Header Components
+Header components can also be specified in `columns` entries as the `headerComponent` property. Header components are only passed `column`, the column object from `columns`.
 
 ## Options:
 
@@ -95,6 +144,9 @@ Svelte Data Grid provides a few options for controlling the grid and its interac
 ## Events:
  - `columnOrderUpdated` - Fired when the user has dragged a column to a new position. The updated column order can be accessed from `component.get().columns`
  - `columnWidthUpdated` - Fired when a user has resized a column. The updated column width can be accessed from `event.width` and the column index can be accessed from `event.idx`
+
+## Bugs? Suggestions?
+Feedback is always appreciated. Feel free to open a GitHub issue if DataGrid doesn't work the way you expect or want it to.
 
 ## TODO:
  - Add accessible ways of resizing and reordering columns.
