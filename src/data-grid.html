@@ -10,7 +10,7 @@
       -- control the 'scroll' of the header row -->
     <div class="grid-header-row" style="left: -{__scrollLeft}px; height: {rowHeight}px; width: {gridSpaceWidth}px;" role="row">
       {#each columns as column, i (i)}
-        <div class="grid-cell" on:mousedown="onColumnDragStart(event, i)" style="left: {getCellLeft(i, columnWidths)}px; width: {columnWidths[i]}px; line-height: {rowHeight}px;" title={column.display || ''} use:dragCopy="allowColumnReordering" role="columnheader">
+        <div class="grid-cell" on:mousedown="onColumnDragStart(event, i)" style="left: {getCellLeft(i, columnWidths)}px; width: {columnWidths[i]}px; height: {rowHeight}px; line-height: {rowHeight}px;" title={column.display || ''} use:dragCopy="allowColumnReordering" role="columnheader">
           {#if column.headerComponent}
             <svelte:component this={column.headerComponent} column={column} />
           {:else}
@@ -108,7 +108,8 @@ export default {
       __columnActionLineLeft: 0,            // DO NOT MODIFY DIRECTLY. The 'left' position of the action line
       __innerOffsetHeight: 0,               // DO NOT MODIFY DIRECTLY. The height of the scrollable area on screen
       __scrollTop: 0,                       // DO NOT MODIFY DIRECTLY. The scrollTop position of the scrollable area
-      __scrollLeft: 0,                      // DO NOT MODIFY DIRECTLY The scrollLeft position of the scrollable area
+      __scrollLeft: 0,                      // DO NOT MODIFY DIRECTLY. The scrollLeft position of the scrollable area
+      __scrolledAllTheWayToTheRight: false  // DO NOT MODIFY DIRECTLY. Whether the container is scrolled all the way to the right as of the last onscroll event
       
     };
   },
@@ -162,6 +163,7 @@ export default {
         const { width, height, textAlign, fontWeight } = getComputedStyle(node);
         copy.style.width = width;
         copy.style.height = height;
+        copy.style.maxHeight = height;
         copy.style.textAlign = textAlign;
         copy.style.fontWeight = fontWeight;
         copy.style.position = 'absolute';
@@ -379,6 +381,8 @@ export default {
      * Sets updated scroll values when the scrollable area is scrolled
      */
     onScroll(event) {
+      
+
       const obj = {};
       // get current saved scroll values
       const { __scrollTop, __scrollLeft } = this.get();
@@ -397,6 +401,8 @@ export default {
       if (__scrollLeft !== newScrollLeft) {
         obj.__scrollLeft = newScrollLeft;
       }
+
+      obj.__scrolledAllTheWayToTheRight = this.refs.tableSpace.scrollWidth - this.refs.tableSpace.scrollLeft === this.refs.tableSpace.clientWidth;
 
       this.set(obj);
     }
@@ -420,10 +426,20 @@ export default {
     /**
      * Width of the overall grid space
      */
-    gridSpaceWidth: ({ columnWidths }) => {
+    gridSpaceWidth: ({ columnWidths, __resizing, __scrolledAllTheWayToTheRight }) => {
       let sum = 0;
       for (let i = 0; i < columnWidths.length; i++) {
         sum += columnWidths[i];
+      }
+
+      /**
+       * If the table is scrolled all the way to the right, resizing columns could
+       * accelerate until the column is the minimum width. Add some extra space on the right
+       * to ensure this undesired behavior does not happen. This doesn't seem like a perfect solution
+       * but it works for now until I can think of something better.
+       */ 
+      if (__resizing && __scrolledAllTheWayToTheRight) {
+        sum *= 2;
       }
 
       return sum;
@@ -485,6 +501,10 @@ export default {
 
 .resizing .grid-space {
   pointer-events: all;
+}
+
+.grid-cell > * {
+  height: 100%;
 }
 
 .cell-default {
