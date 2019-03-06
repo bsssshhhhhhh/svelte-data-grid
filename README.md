@@ -1,8 +1,4 @@
 [![npm](https://img.shields.io/npm/v/svelte-data-grid.svg?style=flat-square)](https://npmjs.org/package/svelte-data-grid)
-<<<<<<< HEAD
-
-=======
->>>>>>> 180be913652a5e1ec1844a2704b0bacc9561926b
 # Svelte Data Grid
 
 Svelte Data Grid is a svelte v2 component for displaying any amount of data.
