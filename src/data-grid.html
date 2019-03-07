@@ -89,30 +89,44 @@ function getClosestIndex(x, columnWidths) {
 export default {
   data() {
     return {
-      rows: [],                             // Rows to display
-      columns: [],                          // Array of column definitions: { display: '', dataName: ''}, where display is what the display value is and dataName is what the key on the row object is
-      rowHeight: 24,                        // Row height in pixels
-      allowResizeFromTableCells: false,     // Allow the user to click on table cell borders to resize columns
-      allowResizeFromTableHeaders: true,    // Allow the user to clikc on table header borders to resize columns
-      allowColumnReordering: true,          // Allow the user to drag column headers to reorder columns
+      rows: [],                               // Rows to display
+      columns: [],                            // Array of column definitions: { display: '', dataName: ''}, where display is what the display value is and dataName is what the key on the row object is
+      rowHeight: 24,                          // Row height in pixels
+      allowResizeFromTableCells: false,       // Allow the user to click on table cell borders to resize columns
+      allowResizeFromTableHeaders: true,      // Allow the user to clikc on table header borders to resize columns
+      allowColumnReordering: true,            // Allow the user to drag column headers to reorder columns
+      sortFn: function() { return 0; },       // Function to use to sort the rows. Passed as the first parameter to Array.prototype.sort
+      filterFn: function() { return true; },  // Function to use to filter the rows. Passed as the first parameter to Array.prototype.filter
 
-      __extraRows: 0,                       // Number of extra rows to render beyond what is visible in the scrollable area
-      __columnHeaderResizeCaptureWidth: 20, // The width of the area on column borders that can be clicked to resize the column
+      __extraRows: 0,                         // Number of extra rows to render beyond what is visible in the scrollable area
+      __columnHeaderResizeCaptureWidth: 20,   // The width of the area on column borders that can be clicked to resize the column
 
       /**** Do not modify any of the data variables below ****/
-      __columnDragging: false,              // DO NOT MODIFY DIRECTLY. Whether a column is being dragged
-      __columnIndexBeingDragged: null,      // DO NOT MODIFY DIRECTLY. The column index that is being dragged
-      __columnDragOffsetX: 0,               // DO NOT MODIFY DIRECTLY. The X offset of where the user clicked on the column header
-      __resizing: false,                    // DO NOT MODIFY DIRECTLY. Whether or not a column is currently being resized
-      __columnIndexBeingResized: null,      // DO NOT MODIFY DIRECTLY. The column index being resized
-      __columnActionLineLeft: 0,            // DO NOT MODIFY DIRECTLY. The 'left' position of the action line
-      __innerOffsetHeight: 0,               // DO NOT MODIFY DIRECTLY. The height of the scrollable area on screen
-      __scrollTop: 0,                       // DO NOT MODIFY DIRECTLY. The scrollTop position of the scrollable area
-      __scrollLeft: 0,                      // DO NOT MODIFY DIRECTLY. The scrollLeft position of the scrollable area
-      __scrolledAllTheWayToTheRight: false  // DO NOT MODIFY DIRECTLY. Whether the container is scrolled all the way to the right as of the last onscroll event
+      __columnDragging: false,                // DO NOT MODIFY DIRECTLY. Whether a column is being dragged
+      __columnIndexBeingDragged: null,        // DO NOT MODIFY DIRECTLY. The column index that is being dragged
+      __columnDragOffsetX: 0,                 // DO NOT MODIFY DIRECTLY. The X offset of where the user clicked on the column header
+      __resizing: false,                      // DO NOT MODIFY DIRECTLY. Whether or not a column is currently being resized
+      __columnIndexBeingResized: null,        // DO NOT MODIFY DIRECTLY. The column index being resized
+      __columnActionLineLeft: 0,              // DO NOT MODIFY DIRECTLY. The 'left' position of the action line
+      __innerOffsetHeight: 0,                 // DO NOT MODIFY DIRECTLY. The height of the scrollable area on screen
+      __scrollTop: 0,                         // DO NOT MODIFY DIRECTLY. The scrollTop position of the scrollable area
+      __scrollLeft: 0,                        // DO NOT MODIFY DIRECTLY. The scrollLeft position of the scrollable area
+      __scrolledAllTheWayToTheRight: false    // DO NOT MODIFY DIRECTLY. Whether the container is scrolled all the way to the right as of the last onscroll event
       
     };
   },
+
+  onstate({ changed, current, previous}) {
+    if (changed.sortFn) {
+      let { rows } = this.get();
+
+      // this will sort the array in place, so we need to this.set() rows afterward
+      // to let svelte know it has changed
+      rows = rows.sort(current.sortFn);
+      this.set({ rows });
+    }
+  },
+
   actions: {
     /**
      * This action creates a half-opaque 'ghost' column header to visualize dragging a column into a different position
@@ -409,6 +423,13 @@ export default {
   },
   computed: {
     /**
+     * Filter the rows based on the defined filter function
+     */
+    filteredRows: ({ rows, filterFn }) => {
+      return rows.filter(filterFn);
+    },
+
+    /**
      * Array of column widths
      */
     columnWidths: ({ columns }) => {
@@ -417,10 +438,10 @@ export default {
     },
 
     /**
-     * The number of rows we have
+     * The number of filtered rows we have
      */
-    numRows: ({ rows }) => {
-      return rows.length;
+    numRows: ({ filteredRows }) => {
+      return filteredRows.length;
     },
 
     /**
@@ -462,11 +483,11 @@ export default {
     /**
      * Computes which rows should be visible
      */
-    visibleRows: ({ rowHeight, rows, __scrollTop, numRowsInViewport, __extraRows }) => {
+    visibleRows: ({ rowHeight, filteredRows, __scrollTop, numRowsInViewport, __extraRows }) => {
       const start = Math.max(0, Math.floor((__scrollTop / rowHeight) - (__extraRows / 2)));
       const end = start + numRowsInViewport + __extraRows;
 
-      return rows.slice(start, end).map((x, i) => {
+      return filteredRows.slice(start, end).map((x, i) => {
         return {
           i: i + start, // for aria-rowindex
           data: x       // the row data

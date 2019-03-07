@@ -137,6 +137,8 @@ Svelte Data Grid provides a few options for controlling the grid and its interac
 - `allowResizeFromTableCells` - Allow user to click and drag the right border of a table cell to resize the column *(Default: false)*
 - `allowResizeFromTableHeaders` - Allow user to click and drag the right border of a column header to resize the column *(Default: true)*
 - `allowColumnReordering` - Allow user to drag a column header to move that column to a new position *(Default: true)*
+- `sortFn` - Function to use to sort the rows. Passed as the first parameter to Array.prototype.sort *(Default: `function() { return 0; }`)*
+- `filterFn` - Function to use to filter the rows. Passed as the first parameter to Array.prototype.filter *(Default: `function() { return true; }`)*
 - `__extraRows` - If it is desired that the virtual list include more DOM rows than are visible, the number of extra rows can be specified in `__extraRows` *(Default: 0)*
 - `__columnHeaderResizeCaptureWidth` The width of the element, in pixels, placed at the right border of a column that triggers that column's resize. *(Default: 20)*
 
@@ -146,7 +148,3 @@ Svelte Data Grid provides a few options for controlling the grid and its interac
 
 ## Bugs? Suggestions?
 Feedback is always appreciated. Feel free to open a GitHub issue if DataGrid doesn't work the way you expect or want it to.
-
-## TODO:
- - Add accessible ways of resizing and reordering columns.
- - Sorting and filtering per column
