@@ -37,6 +37,7 @@ grid.on('columnOrderUpdated', () => {
   // save new column  order
 });
 ```
+To learn more about using DataGrid outside of svelte, read [svelte's guide](https://svelte.technology/guide#component-api) on how to interact with a svelte component. It is possible to integrate into any framework.
 
 DataGrid requires 2 properties to be passed in order to display data: `rows` and `columns`.
 
