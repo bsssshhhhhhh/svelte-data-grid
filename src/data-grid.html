@@ -423,13 +423,6 @@ export default {
   },
   computed: {
     /**
-     * Filter the rows based on the defined filter function
-     */
-    filteredRows: ({ rows, filterFn }) => {
-      return rows.filter(filterFn);
-    },
-
-    /**
      * Array of column widths
      */
     columnWidths: ({ columns }) => {
@@ -440,8 +433,8 @@ export default {
     /**
      * The number of filtered rows we have
      */
-    numRows: ({ filteredRows }) => {
-      return filteredRows.length;
+    numRows: ({ rows }) => {
+      return rows.length;
     },
 
     /**
@@ -483,11 +476,11 @@ export default {
     /**
      * Computes which rows should be visible
      */
-    visibleRows: ({ rowHeight, filteredRows, __scrollTop, numRowsInViewport, __extraRows }) => {
+    visibleRows: ({ rowHeight, rows, __scrollTop, numRowsInViewport, __extraRows }) => {
       const start = Math.max(0, Math.floor((__scrollTop / rowHeight) - (__extraRows / 2)));
       const end = start + numRowsInViewport + __extraRows;
 
-      return filteredRows.slice(start, end).map((x, i) => {
+      return rows.slice(start, end).map((x, i) => {
         return {
           i: i + start, // for aria-rowindex
           data: x       // the row data
