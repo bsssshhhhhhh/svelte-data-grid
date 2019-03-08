@@ -91,8 +91,8 @@ Components will be passed the following properties:
 
 MyCustomCell.html
 ```
-<div style="color: {colors[row[column.dataName]] || 'black'};">
-  {row[column.dataName]}
+<div style="color: {colors[row.data[column.dataName]] || 'black'};">
+  {row.data[column.dataName]}
 </div>
 
 <script>
@@ -141,6 +141,9 @@ Svelte Data Grid provides a few options for controlling the grid and its interac
 - `filterFn` - Function to use to filter the rows. Passed as the first parameter to Array.prototype.filter *(Default: `function() { return true; }`)*
 - `__extraRows` - If it is desired that the virtual list include more DOM rows than are visible, the number of extra rows can be specified in `__extraRows` *(Default: 0)*
 - `__columnHeaderResizeCaptureWidth` The width of the element, in pixels, placed at the right border of a column that triggers that column's resize. *(Default: 20)*
+
+## Sorting and Filtering
+You can override the default `filterFn` and `sortFn` options to filter and sort. Alternatively, you can handle filtering and sorting from outside DataGrid, passing in the sorted/filtered `rows` array from your parent component.
 
 ## Events:
  - `columnOrderUpdated` - Fired when the user has dragged a column to a new position. The updated column order can be accessed from `component.get().columns`
