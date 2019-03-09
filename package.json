@@ -1,7 +1,7 @@
 {
   "name": "svelte-data-grid",
   "svelte": "src/data-grid.html",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "author": {
     "name": "Brian Simon",
     "email": "bsssshhhhhhh@gmail.com",
