@@ -51,7 +51,8 @@ DataGrid requires 2 properties to be passed in order to display data: `rows` and
   {
     display: 'Fruit Name',  // What will be displayed as the column header
     dataName: 'fruitName',  // The key of a row to get the column's data from
-    width: 300              // Width, in pixels, of column
+    width: 300,             // Width, in pixels, of column
+    disallowResize: true    // Optional - disables resizing this column
   },
   {
     display: 'Color',

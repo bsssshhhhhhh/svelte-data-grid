@@ -19,7 +19,7 @@
             </div>
           {/if}
         </div>
-        {#if allowResizeFromTableHeaders}
+        {#if allowResizeFromTableHeaders && !column.disallowResize}
           <div class="grid-cell-size-capture" style="left: {getCellLeft(i+1, columnWidths) - Math.floor(__columnHeaderResizeCaptureWidth / 2)}px; width: {__columnHeaderResizeCaptureWidth}px;" on:mousedown="onColumnResizeStart(event, i)"></div>
         {/if}
       {/each}
@@ -29,8 +29,10 @@
     <!-- We need an element to take up space so our scrollbars appear-->
     <div class="grid-space" style="width: {gridSpaceWidth}px; height: {gridSpaceHeight}px;">
       {#if allowResizeFromTableCells}
-        {#each columns as columns, i}
-          <div class="grid-cell-size-capture" style="left: {getCellLeft(i+1, columnWidths) - Math.floor(__columnHeaderResizeCaptureWidth / 2)}px; width: {__columnHeaderResizeCaptureWidth}px;" on:mousedown="onColumnResizeStart(event, i)"></div>
+        {#each columns as column, i}
+          {#if !column.disallowResize}
+            <div class="grid-cell-size-capture" style="left: {getCellLeft(i+1, columnWidths) - Math.floor(__columnHeaderResizeCaptureWidth / 2)}px; width: {__columnHeaderResizeCaptureWidth}px;" on:mousedown="onColumnResizeStart(event, i)"></div>
+          {/if}
         {/each}
       {/if}
     </div>
@@ -45,10 +47,9 @@
             {#if column.cellComponent}
               <svelte:component this={column.cellComponent} rowNumber={row.i} column={column} row={row} />
             {:else}
-            <div class="cell-default">
-              {row.data[column.dataName] || ''}
-            </div>
-              
+              <div class="cell-default">
+                {row.data[column.dataName] || ''}
+              </div>
             {/if}
           </div>
         {/each}
