@@ -116,17 +116,6 @@ export default {
     };
   },
 
-  onstate({ changed, current, previous}) {
-    if (changed.sortFn) {
-      let { rows } = this.get();
-
-      // this will sort the array in place, so we need to this.set() rows afterward
-      // to let svelte know it has changed
-      rows = rows.sort(current.sortFn);
-      this.set({ rows });
-    }
-  },
-
   actions: {
     /**
      * This action creates a half-opaque 'ghost' column header to visualize dragging a column into a different position
