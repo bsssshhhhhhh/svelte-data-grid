@@ -25,15 +25,17 @@
       {/each}
     </div>
   </div>
-  <div class="grid-inner" ref:tableSpace bind:offsetHeight="__innerOffsetHeight" on:scroll="onScroll(event)" style="height: calc(100% );" role="rowgroup">
+  <div class="grid-inner" ref:tableSpace bind:offsetHeight="__innerOffsetHeight" on:scroll="onScroll(event)" style="height: 100%;" role="rowgroup">
     <!-- We need an element to take up space so our scrollbars appear-->
-    <div class="grid-space" style="width: {gridSpaceWidth}px; height: {gridSpaceHeight}px;"></div>
+    <div class="grid-space" style="width: {gridSpaceWidth}px; height: {gridSpaceHeight}px;">
+      {#if allowResizeFromTableCells}
+        {#each columns as columns, i}
+          <div class="grid-cell-size-capture" style="left: {getCellLeft(i+1, columnWidths) - Math.floor(__columnHeaderResizeCaptureWidth / 2)}px; width: {__columnHeaderResizeCaptureWidth}px;" on:mousedown="onColumnResizeStart(event, i)"></div>
+        {/each}
+      {/if}
+    </div>
     
-    {#if allowResizeFromTableCells}
-      {#each columns as columns, i}
-        <div class="grid-cell-size-capture" style="left: {getCellLeft(i+1, columnWidths) - Math.floor(__columnHeaderResizeCaptureWidth / 2)}px; width: {__columnHeaderResizeCaptureWidth}px;" on:mousedown="onColumnResizeStart(event, i)"></div>
-      {/each}
-    {/if}
+    
     <!-- Loop through the visible rows and display the data-->
     <!-- Scrolling seems to perform better when not using a keyed each block -->
     {#each visibleRows as row, i}
@@ -540,6 +542,7 @@ export default {
   z-index: 5;
   background: transparent;
   cursor: ew-resize;
+  pointer-events: all;
 }
 
 .grid-inner {
