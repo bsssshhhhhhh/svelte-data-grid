@@ -407,7 +407,7 @@ export default {
         obj.__scrollLeft = newScrollLeft;
       }
 
-      obj.__scrolledAllTheWayToTheRight = this.refs.tableSpace.scrollWidth - this.refs.tableSpace.scrollLeft === this.refs.tableSpace.clientWidth;
+      obj.__scrolledAllTheWayToTheRight = Math.ceil(this.refs.tableSpace.scrollWidth - this.refs.tableSpace.scrollLeft) === this.refs.tableSpace.clientWidth;
 
       this.set(obj);
     }
