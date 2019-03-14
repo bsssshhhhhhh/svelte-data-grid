@@ -106,8 +106,11 @@ export default {
 
       __extraRows: 0,                         // Number of extra rows to render beyond what is visible in the scrollable area
       __columnHeaderResizeCaptureWidth: 20,   // The width of the area on column borders that can be clicked to resize the column
-
       /**** Do not modify any of the data variables below ****/
+      __affixedRowIndices: [],                // DO NOT MODIFY DIRECTLY. The row indices to affix to the top of the grid
+      __affixedColumnIndices: [],             // DO NOT MODIFY DIRECTLY. The column indices to affix to the left side of the grid
+      __affixingRow: false,                   // DO NOT MODIFY DIRECTLY. Whether a row affix operation is in progress
+      __affixingColumn: false,                // DO NOT MODIFY DIRECTLY. Whether a column affix operation is in progress
       __columnDragging: false,                // DO NOT MODIFY DIRECTLY. Whether a column is being dragged
       __columnIndexBeingDragged: null,        // DO NOT MODIFY DIRECTLY. The column index that is being dragged
       __columnDragOffsetX: 0,                 // DO NOT MODIFY DIRECTLY. The X offset of where the user clicked on the column header
@@ -218,10 +221,70 @@ export default {
     onMouseMove(event) {
       this.onColumnDragMouseMove(event);
       this.onColumnResizeMouseMove(event);
+      this.onRowAffixMouseMove(event);
+      this.onColumnAffixMouseMove(event);
     },
     onMouseUp(event) {
       this.onColumnDragEnd(event);
       this.onColumnResizeEnd(event);
+      this.onRowAffixEnd(event);
+      this.onColumnAffixEnd(event);
+    },
+
+    /**
+     * Event handler for starting column affix operation
+     */
+    onColumnAffixStart(event) {
+      this.set({
+        __affixingColumn: true
+      });
+    },
+
+    /**
+     * Event handler for mousemove column affix operation
+     */
+    onColumnAffixMouseMove(event) {
+      const { __affixingColumn } = this.get();
+      if (!__affixingColumn) {
+        return;
+      }
+    },
+
+    /**
+     * Event handler for ending column affix operation
+     */
+    onColumnAffixEnd(event) {
+      this.set({
+        __affixingColumn: false
+      });
+    },
+
+    /**
+     * Event handler for starting row affix operation
+     */
+    onRowAffixStart(event) {
+      this.set({
+        __affixingRow: true
+      });
+    },
+
+    /**
+     * Event handler for mousemove row affix operation
+     */
+    onRowAffixMouseMove(event) {
+      const { __affixingRow } = this.get();
+      if (!__affixingRow) {
+        return;
+      }
+    },
+
+    /**
+     * Event handler for ending row affix operation
+     */
+    onRowAffixEnd(event) {
+      this.set({
+        __affixingRow: false
+      });
     },
 
     /**
