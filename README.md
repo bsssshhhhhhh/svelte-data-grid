@@ -142,7 +142,7 @@ Svelte Data Grid provides a few options for controlling the grid and its interac
 - `allowResizeFromTableCells` - Allow user to click and drag the right border of a table cell to resize the column *(Default: false)*
 - `allowResizeFromTableHeaders` - Allow user to click and drag the right border of a column header to resize the column *(Default: true)*
 - `allowColumnReordering` - Allow user to drag a column header to move that column to a new position *(Default: true)*
-- `allowColumnAffix` - Allow user to drag the double line to affix columns to the left side of the grid. See section below for caveats *(Default: true)*
+- `allowColumnAffix` - Allow user to drag the double line to affix columns to the left side of the grid. See section below for caveats *(Default: true if the browser is chrome, false otherwise)*
 - `__extraRows` - If it is desired that the virtual list include more DOM rows than are visible, the number of extra rows can be specified in `__extraRows` *(Default: 0)*
 - `__columnHeaderResizeCaptureWidth` The width of the element, in pixels, placed at the right border of a column that triggers that column's resize. *(Default: 20)*
 

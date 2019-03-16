@@ -66,6 +66,8 @@
 </div>
 
 <script>
+import { detect } from 'detect-browser';
+const browser = detect();
 
 const MIN_COLUMN_SIZE = 30;
 
@@ -144,7 +146,7 @@ export default {
       allowResizeFromTableCells: false,       // Allow the user to click on table cell borders to resize columns
       allowResizeFromTableHeaders: true,      // Allow the user to clikc on table header borders to resize columns
       allowColumnReordering: true,            // Allow the user to drag column headers to reorder columns
-      allowColumnAffix: true,                 // Alow the user to affix columns to the left of the grid
+      allowColumnAffix: browser && browser.name === 'chrome',                 // Alow the user to affix columns to the left of the grid
       sortFn: function() { return 0; },       // Function to use to sort the rows. Passed as the first parameter to Array.prototype.sort
       filterFn: function() { return true; },  // Function to use to filter the rows. Passed as the first parameter to Array.prototype.filter
 
@@ -274,7 +276,6 @@ export default {
       this.onRowAffixEnd(event);
       this.onColumnAffixEnd(event);
     },
-
     /**
      * Event handler for starting column affix operation
      */
