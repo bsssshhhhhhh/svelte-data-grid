@@ -155,5 +155,7 @@ Svelte Data Grid provides a few options for controlling the grid and its interac
 
 This feature works well on Chrome because Chrome's scroll events are not fired asynchronously from the scroll action. Firefox, Edge, and IE all fire scroll events *after* the overflow container has scroll on screen. This causes a jittery effect that we cannot easily work around while providing a cross-browser solution. 
 
+To fix the jitteriness on Firefox, a setting in about:config can be changed to turn off APZ. Set `layers.async-pan-zoom.enabled` to `false`. Obviously this is not a solution we can reasonably ask users to try, so I'm looking for other solutions.
+
 ## Bugs? Suggestions?
 Feedback is always appreciated. Feel free to open a GitHub issue if DataGrid doesn't work the way you expect or want it to.
