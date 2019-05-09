@@ -4,7 +4,7 @@
 ## [Demo](https://bsssshhhhhhh.github.io/svelte-data-grid-demo/)
 
 
-Svelte Data Grid is a svelte v2 component for displaying any amount of data.
+Svelte Data Grid is a svelte v2 component for displaying and editing any amount of data.
 
 ## Features:
  - Excellent scrolling performance
@@ -83,6 +83,66 @@ DataGrid requires 2 properties to be passed in order to display data: `rows` and
 ]
 
 ```
+
+## Editing Data
+
+Version 2 adds early support for editing data. Due to the lack of using a keyed each block to render the rows, maintaining focus on controls as the user scrolls is a tad wonky. This will be resolved in a future version.
+
+Import the components:
+```
+import TextboxCell from 'svelte-data-grid/src/textbox-cell.html';
+import SelectCell from 'svelte-data-grid/src/select-cell.html';
+import CheckboxCell from 'svelte-data-grid/src/checkbox-cell.html';
+```
+
+### Textbox Cell
+Textbox cell will debounce the user input, only recording changes after 400ms has elapsed since the user stops typing.
+```
+{
+  display: 'Name',
+  dataName: 'name',
+  width: 250,
+  cellComponent: TextboxCell
+}
+```
+
+### Select Cell
+
+SelectCell requires that you provide an `options` array in your cell definition:
+```
+{
+  display: 'Eye Color',
+  dataName: 'eyeColor',
+  width: 75,
+  cellComponent: SelectCell,
+  options: [
+    {
+      display: 'Green',
+      value: 'green'
+    },
+    {
+      display: 'Blue',
+      value: 'blue'
+    },
+    {
+      display: 'Brown',
+      value: 'brown'
+    }
+  ]
+}
+```
+
+### Checkbox Cell
+CheckboxCell will set the checked state of the checkbox depending on the boolean value of the row's data.
+```
+{
+  display: 'Active',
+  dataName: 'isActive',
+  width: 75,
+  cellComponent: CheckboxCell
+}
+```
+
 
 ## Custom Cell Components
 

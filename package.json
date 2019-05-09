@@ -2,7 +2,7 @@
   "name": "svelte-data-grid",
   "description": "High-performance svelte data table component for displaying huge datasets",
   "svelte": "src/data-grid.html",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "author": {
     "name": "Brian Simon",
     "email": "bsssshhhhhhh@gmail.com",
@@ -37,6 +37,7 @@
     "data-grid.*",
     "select-cell.*",
     "textbox-cell.*",
+    "checkbox-cell.*",
     "README.md",
     "LICENSE.txt"
   ],

@@ -35,12 +35,11 @@ export default class EditHistory {
       undo: diff(newObj, this.obj)
     };
 
-    this.obj = JSON.parse(JSON.stringify(newObj));
-
     if (!patch.redo || !patch.undo) {
       console.warn('Objects could not be diffed');
     }
     else {
+      this.obj = JSON.parse(JSON.stringify(newObj));
       this.backward.push(patch);
     }
   }
