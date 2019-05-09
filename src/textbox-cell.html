@@ -1,0 +1,93 @@
+<div class="textbox-cell">
+  <input type="text" on:input="onInput(event)" on:focus="onFocus(event)" on:blur="onBlur(event)" ref:textbox>
+</div>
+
+<style>
+.textbox-cell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  z-index: 3;
+}
+
+input {
+  height: 100%;
+  width: 100%;
+  border: 0;
+  margin: 0;
+  padding: 0 5px;
+  box-sizing: border-box;
+}
+
+input:active,
+input:focus {
+  border: 1px solid lime;
+}
+</style>
+
+<script>
+import debounce from 'debounce';
+
+const INPUT_DEBOUNCE_INTERVAL = 400;
+
+export default {
+  onstate({ changed, current }) {
+    if ((changed.column || changed.row)) {
+      const updateTextbox = () => {
+        this.refs.textbox.value = current.row.data[current.column.dataName];
+      }
+      if (this.refs.textbox) {
+        updateTextbox();
+      } else {
+        setTimeout(updateTextbox, 0);
+      }
+      
+    }
+  },
+  onupdate({ changed, current }) {
+    /* Since data-grid isn't using a keyed each block to display the rows, we need to update
+       the focus as the grid scrolls. When this cell component receives a new row, check if the column's active row
+       is this row, and focus or blur if necessary */
+    if (changed.row) {
+      if (current.column.activeRow && current.column.activeRow === current.rowNumber && this.refs.textbox) {
+        this.refs.textbox.focus();
+      } else if (this.refs.textbox === document.activeElement) {
+        this.refs.textbox.blur();
+      }
+    }
+  },
+  methods: {
+    onFocus(event) {
+      const { column, rowNumber } = this.get();
+      column.activeRow = rowNumber;
+    },
+    onBlur(event) {
+      const { column } = this.get();
+
+      // if blur event was user-initiated and not initiated by the blur call above,
+      // remove the activeRow property
+      if (event.sourceCapabilities) {
+        delete column.activeRow;
+      }
+    },
+
+    /**
+     * Debounce the oninput handler so that there isn't edit history for every keystroke
+     */
+    onInput: debounce(function (event) {
+      const value = this.refs.textbox.value;
+      const { row, column, rowNumber } = this.get();
+      setTimeout(() => {
+        this.fire('valueupdate', { 
+          row, 
+          column, 
+          value, 
+          rowNumber 
+        });
+      });
+      
+    }, INPUT_DEBOUNCE_INTERVAL)
+  }
+}
+</script>
+

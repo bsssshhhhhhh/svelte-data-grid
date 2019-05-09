@@ -1,7 +1,10 @@
-<svelte:window on:mouseup="onMouseUp(event)" on:mousemove="onMouseMove(event)" />
+<svelte:window on:mouseup="onMouseUp(event)" on:mousemove="onMouseMove(event)" on:keydown="onWindowKeyDown(event)" />
 <div class="data-grid-wrapper { __resizing || __columnDragging ? 'resizing' : '' }" style="padding-top: {rowHeight}px;" ref:wrapper role="table">
   {#if __resizing || __columnDragging || __affixingColumn}
     <div class="column-action-line" style="left: {__columnActionLineLeft - 2}px;"></div>
+  {/if}
+  {#if __affixingRow}
+    <div class="row-action-line" style="top: {__rowActionLineTop - 2}px;"></div>
   {/if}
 
   <div class="grid-headers" style="height: {rowHeight}px;" rolw="rowgroup">
@@ -26,7 +29,7 @@
     </div>
   </div>
 
-  <div class="grid-inner" ref:tableSpace bind:offsetHeight="__innerOffsetHeight" on:scroll="onScroll(event)" style="height: 100%;" role="rowgroup">
+  <div class="grid-inner" ref:tableSpace bind:offsetHeight="__innerOffsetHeight" on:scroll="onScroll()" style="height: 100%;" role="rowgroup">
 
     {#if allowColumnAffix}
       <div class="column-affix-marker" style="left: {columnAffixLineLeft}px; height: {gridSpaceHeight}px;" on:mousedown="onColumnAffixStart(event)"></div>
@@ -52,7 +55,7 @@
         {#each columns as column, j}
           <div class="grid-cell" style="z-index: {getCellZIndex(__affixedColumnIndices, j)}; left: {getCellLeft({i: j, columnWidths, __affixedColumnIndices, __scrollLeft})}px; height: {rowHeight}px; line-height: {rowHeight}px; width: {columnWidths[j]}px;" role="cell">
             {#if column.cellComponent}
-              <svelte:component this={column.cellComponent} rowNumber={row.i} column={column} row={row} />
+              <svelte:component this={column.cellComponent} rowNumber={row.i} column={column} row={row} on:valueupdate="onCellUpdated(event)" />
             {:else}
               <div class="cell-default">
                 {row.data[column.dataName] || ''}
@@ -66,8 +69,8 @@
 </div>
 
 <script>
-import { detect } from 'detect-browser';
-const browser = detect();
+import EditHistory from './edit-history';
+import * as deepDiff from 'deep-diff';
 
 const MIN_COLUMN_SIZE = 30;
 
@@ -96,6 +99,14 @@ function getCellLeft({i, columnWidths, __affixedColumnIndices, __scrollLeft}) {
   return left;
 }
 
+/**
+ * Gets the closest column index given an x offset
+ * @param {Number} x The x offset
+ * @param {Array} columnWidths Array of column widths
+ * @param {Array} __affixedColumnIndices Array of column indices that have been affixed
+ * @param {Number} __scrollLeft The scrollLeft value of the scrollable container
+ * @returns {Number}
+ */ 
 function getClosestIndex(x, columnWidths, __affixedColumnIndices, __scrollLeft) {
   let closest = 0;
   
@@ -138,6 +149,10 @@ function getBodyScrollTop() {
 }
 
 export default {
+  oncreate() {
+    const { rows } = this.get();
+    this.editHistory = new EditHistory(rows);
+  },
   data() {
     return {
       rows: [],                               // Rows to display
@@ -146,17 +161,16 @@ export default {
       allowResizeFromTableCells: false,       // Allow the user to click on table cell borders to resize columns
       allowResizeFromTableHeaders: true,      // Allow the user to clikc on table header borders to resize columns
       allowColumnReordering: true,            // Allow the user to drag column headers to reorder columns
-      allowColumnAffix: browser && browser.name === 'chrome',                 // Alow the user to affix columns to the left of the grid
-      sortFn: function() { return 0; },       // Function to use to sort the rows. Passed as the first parameter to Array.prototype.sort
-      filterFn: function() { return true; },  // Function to use to filter the rows. Passed as the first parameter to Array.prototype.filter
+      allowColumnAffix: true,                 // Alow the user to affix columns to the left of the grid
 
-      __extraRows: 10,                         // Number of extra rows to render beyond what is visible in the scrollable area
+      __extraRows: 0,                         // Number of extra rows to render beyond what is visible in the scrollable area
       __columnHeaderResizeCaptureWidth: 20,   // The width of the area on column borders that can be clicked to resize the column
       /**** Do not modify any of the data variables below ****/
       __affixedRowIndices: [],                // DO NOT MODIFY DIRECTLY. The row indices to affix to the top of the grid
       __affixedColumnIndices: [],             // DO NOT MODIFY DIRECTLY. The column indices to affix to the left side of the grid
       __affixingRow: false,                   // DO NOT MODIFY DIRECTLY. Whether a row affix operation is in progress
       __affixingColumn: false,                // DO NOT MODIFY DIRECTLY. Whether a column affix operation is in progress
+      __rowActionLineTop: 0,                  // DO NOT MODIFY DIRECTLY. The 'top' position of the row action line
       __rowAffixLineTop: 0,                   // DO NOT MODIFY DIRECTLY. The 'top' position of the row affix line
       __columnAffixLineLeft: 0,               // DO NOT MODIFY DIRECTLY. The 'left' position of the column affix line
       __columnDragging: false,                // DO NOT MODIFY DIRECTLY. Whether a column is being dragged
@@ -170,6 +184,18 @@ export default {
       __scrollLeft: 0,                        // DO NOT MODIFY DIRECTLY. The scrollLeft position of the scrollable area
       __scrolledAllTheWayToTheRight: false    // DO NOT MODIFY DIRECTLY. Whether the container is scrolled all the way to the right as of the last onscroll event
     };
+  },
+  onupdate({ changed, current, previous }) {
+    // Record the change in onupdate to allow the DOM to change before doing the deep diff
+    if (changed.rows && previous && previous.rows && previous.rows.length > 0) {
+      if (!current.skipRecord) {
+        this.editHistory.recordChange(current.rows);
+      } else {
+        this.set({ skipRecord: false });
+      }
+    }
+
+    
   },
   actions: {
     /**
@@ -264,17 +290,73 @@ export default {
     }
   },
   methods: {
+    onWindowKeyDown(event) {
+      if (event.ctrlKey) {
+
+        if (event.keyCode === 90) {
+          this.undo();
+          event.preventDefault();
+        }
+
+        if (event.keyCode === 89) {
+          this.redo();
+          event.preventDefault();
+        }
+      }
+    },
+
+    /**
+     * Event handler for window's mousemove event
+     * @param {MouseEvent} event The MouseEvent object
+     */
     onMouseMove(event) {
       this.onColumnDragMouseMove(event);
       this.onColumnResizeMouseMove(event);
       this.onRowAffixMouseMove(event);
       this.onColumnAffixMouseMove(event);
     },
+
+    /**
+     * Event handler for window's mouseup event
+     * @param {MouseEvent} event The MouseEvent object
+     */
     onMouseUp(event) {
       this.onColumnDragEnd(event);
       this.onColumnResizeEnd(event);
       this.onRowAffixEnd(event);
       this.onColumnAffixEnd(event);
+    },
+
+    /**
+     * Event handler for when a value has been updated
+     * @param {Object} event Event object with row and column objects
+     */
+    onCellUpdated(event) {
+      const { rows } = this.get();
+      rows[event.rowNumber][event.column.dataName] = event.value;
+
+      this.set({ rows });
+      this.fire('valueUpdated', event);
+    },
+
+    /**
+     * Applies the most recent backward change
+     */
+    undo() {
+      const rows = this.editHistory.undo();
+      if (rows) {
+        this.set({ rows, skipRecord: true });
+      }
+    },
+    
+    /**
+     * Applies the most recent forward change
+     */ 
+    redo() {
+      const rows = this.editHistory.redo();
+      if (rows) {
+        this.set({ rows, skipRecord: true });
+      }
     },
     /**
      * Event handler for starting column affix operation
@@ -533,7 +615,7 @@ export default {
     /**
      * Sets updated scroll values when the scrollable area is scrolled
      */
-    onScroll(event) {
+    onScroll() {
       const obj = {};
       // get current saved scroll values
       const { __scrollTop, __scrollLeft } = this.get();
@@ -585,7 +667,7 @@ export default {
     },
 
     /**
-     * The number of filtered rows we have
+     * The number of rows we have
      */
     numRows: ({ rows }) => {
       return rows.length;
@@ -642,7 +724,6 @@ export default {
       });
     }
   },
-
   helpers: {
     getCellZIndex: function(__affixedColumnIndices, i) {
       return __affixedColumnIndices.indexOf(i) === -1 ? 1 : 2;
@@ -662,6 +743,15 @@ export default {
 
 
 <style>
+
+.row-action-line {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  z-index: 6;
+  background: #aaa;
+}
 
 .row-affix-marker {
   display: none;
