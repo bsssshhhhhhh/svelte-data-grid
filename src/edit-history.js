@@ -106,5 +106,7 @@ export default class EditHistory {
     while (this.forward.length > 0) {
       this.redo();
     }
+    
+    return this.obj;
   }
 }
