@@ -1,4 +1,4 @@
-import DeepDiff from "deep-diff";
+import * as DeepDiff from "deep-diff";
 const applyChange = DeepDiff.applyChange;
 const diff = DeepDiff.diff;
 /**

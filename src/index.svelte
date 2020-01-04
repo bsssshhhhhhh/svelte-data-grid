@@ -270,12 +270,12 @@
   function onWindowKeyDown(event) {
     if (event.ctrlKey) {
       if (event.keyCode === 90) {
-        this.undo();
+        undo();
         event.preventDefault();
       }
 
       if (event.keyCode === 89) {
-        this.redo();
+        redo();
         event.preventDefault();
       }
     }
@@ -308,7 +308,8 @@
    * @param {Object} event Event object with row and column objects
    */
   function onCellUpdated(event) {
-    rows[event.rowNumber][event.column.dataName] = event.value;
+    rows[event.detail.rowNumber][event.detail.column.dataName] =
+      event.detail.value;
     dispatch("valueUpdated", event);
   }
 
@@ -320,9 +321,6 @@
     if (eRows) {
       rows = eRows;
     }
-    // if (rows) {
-    //   this.set({ rows, skipRecord: true });
-    // }
   }
 
   /**
@@ -330,13 +328,10 @@
    */
 
   function redo() {
-    const eRows = this.editHistory.redo();
+    const eRows = editHistory.redo();
     if (eRows) {
       rows = eRows;
     }
-    // if (rows) {
-    //   this.set({ rows, skipRecord: true });
-    // }
   }
 
   /**
@@ -348,16 +343,10 @@
       return;
     }
     if (__affixedColumnIndices.length > 0) {
-      this.refs.tableSpace.scrollLeft = 0;
+      tableSpace.scrollLeft = 0;
       __affixingColumn = true;
-      // this.set({
-      //   __affixingColumn: true
-      // });
     } else {
       __affixingColumn = true;
-      // this.set({
-      //   __affixingColumn: true
-      // });
     }
   }
 
@@ -391,12 +380,6 @@
 
     __columnActionLineLeft = offsetPoint;
     __affixedColumnIndices = indices;
-
-    // this.set({
-    //   __columnActionLineLeft: offsetPoint,
-    //   __affixedColumnIndices: indices
-    // });
-
     event.preventDefault();
 
     // check to see if horizontal scroll position doesn't match where the
@@ -407,9 +390,6 @@
    */
   function onColumnAffixEnd(event) {
     __affixingColumn = false;
-    // this.set({
-    //   __affixingColumn: false
-    // });
   }
 
   /**
@@ -417,9 +397,6 @@
    */
   function onRowAffixStart(event) {
     __affixingRow = true;
-    // this.set({
-    //   __affixingRow: true
-    // });
   }
 
   /**
@@ -436,9 +413,6 @@
    */
   function onRowAffixEnd(event) {
     __affixingRow = false;
-    // this.set({
-    //   __affixingRow: false
-    // });
   }
 
   /**
@@ -464,13 +438,6 @@
         __scrollLeft,
         __affixedColumnIndices
       }) - __scrollLeft;
-
-    // this.set({
-    //   __columnDragging: true,
-    //   __columnIndexBeingDragged: columnIndex,
-    //   __columnDragOffsetX: event.offsetX,
-    //   __columnActionLineLeft: getCellLeft({i: columnIndex, columnWidths, __scrollLeft, __affixedColumnIndices}) - __scrollLeft
-    // });
   }
 
   function onColumnDragMouseMove(event) {
@@ -481,7 +448,7 @@
     // if user is no longer pressing the left mouse button and we are out of sync
     // with __columnDragging because mouseup didn't fire, finish the reorder
     if (event.which !== 1) {
-      this.onColumnDragEnd(event);
+      onColumnDragEnd(event);
       return;
     }
 
@@ -503,10 +470,6 @@
         __affixedColumnIndices,
         __scrollLeft
       }) - __scrollLeft;
-
-    // this.set({
-    //   __columnActionLineLeft: getCellLeft({i: idx, columnWidths, __affixedColumnIndices, __scrollLeft}) - __scrollLeft
-    // });
   }
 
   /**
@@ -547,13 +510,6 @@
     __columnDragging = false;
     __columnDragOffsetX = 0;
     __columnIndexBeingDragged = null;
-
-    // this.set({
-    //   __columnDragging: false,
-    //   columns,
-    //   __columnDragOffsetX: 0,
-    //   __columnIndexBeingDragged: null
-    // });
   }
 
   /**
@@ -569,13 +525,6 @@
     __resizing = true;
     __columnActionLineLeft = event.pageX - wrapperPageX - __scrollLeft;
     __columnIndexBeingResized = columnIndex;
-
-    // this.set({
-    //   __resizing: true,
-    //   __columnActionLineLeft: event.pageX - wrapperPageX - __scrollLeft,
-    //   __columnIndexBeingResized: columnIndex
-    // });
-
     event.stopPropagation();
   }
 
@@ -638,10 +587,6 @@
     dispatch("columnWidthUpdated");
     __resizing = false;
     __columnIndexBeingResized = null;
-    // this.set({
-    //   __resizing: false,
-    //   __columnIndexBeingResized: null
-    // });
   }
 
   /**
@@ -649,10 +594,7 @@
    */
   function onScroll() {
     // get new scroll values from the scroll area
-    const {
-      scrollTop: newScrollTop,
-      scrollLeft: newScrollLeft
-    } = refs.tableSpace;
+    const { scrollTop: newScrollTop, scrollLeft: newScrollLeft } = tableSpace;
 
     /*
      * To avoid doing unnecessary re-calculation of computed variables, don't set the scroll
@@ -744,7 +686,7 @@
    */
   let gridSpaceHeight = rowHeight * numRows; //TODO setter probably not needed due to reactive statement
   $: {
-    gridSpaceHeight: rowHeight * numRows;
+    gridSpaceHeight = rowHeight * numRows;
   }
 
   /**
@@ -753,7 +695,7 @@
   let numRowsInViewport = Math.ceil(__innerOffsetHeight / rowHeight);
 
   $: {
-    numRowsInViewport: Math.ceil(__innerOffsetHeight / rowHeight);
+    numRowsInViewport = Math.ceil(__innerOffsetHeight / rowHeight);
   }
 
   /**
@@ -761,7 +703,7 @@
    */
   let visibleRows;
 
-  {
+  $: {
     const start = Math.max(
       0,
       Math.floor(__scrollTop / rowHeight - __extraRows / 2)
@@ -1016,7 +958,10 @@
         style="left: {columnAffixLineLeft}px; height: {gridSpaceHeight}px;"
         on:mousedown={onColumnAffixStart} />
     {/if}
-    <!--<div class="row-affix-marker" style="top: {__rowAffixLineTop}px; width: {gridSpaceWidth}px;" on:mousedown="onRowAffixStart(event)"></div>-->
+    <div
+      class="row-affix-marker"
+      style="top: {__rowAffixLineTop}px; width: {gridSpaceWidth}px;"
+      on:mousedown={onRowAffixStart} />
 
     <!-- We need an element to take up space so our scrollbars appear-->
     <div
