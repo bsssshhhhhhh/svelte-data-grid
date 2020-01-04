@@ -2,5 +2,3 @@
 node_modules
 yarn.lock
 package-lock.json
-data-grid.js
-data-grid.mjs
