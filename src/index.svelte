@@ -498,12 +498,13 @@
       __affixedColumnIndices,
       __scrollLeft
     );
-    columns.splice(
+    let mColumns = columns;
+    mColumns.splice(
       newIdx > __columnIndexBeingDragged ? newIdx - 1 : newIdx,
       0,
-      columns.splice(__columnIndexBeingDragged, 1)[0]
+      mColumns.splice(__columnIndexBeingDragged, 1)[0]
     );
-
+    columns = mColumns;
     // delay firing of event so that new column order is accessible when handlers are called
     setTimeout(() => dispatch("columnOrderUpdated"), 0);
 
