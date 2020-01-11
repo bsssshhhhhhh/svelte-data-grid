@@ -1,7 +1,7 @@
 {
   "name": "svelte-data-grid",
   "description": "High-performance svelte data table component for displaying huge datasets",
-  "version": "3.0.0-dev.0",
+  "version": "3.0.0",
   "author": {
     "name": "Brian Simon",
     "email": "bsssshhhhhhh@gmail.com",
