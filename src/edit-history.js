@@ -1,4 +1,4 @@
-const DeepDiff = require('deep-diff');
+import * as DeepDiff from "deep-diff";
 const applyChange = DeepDiff.applyChange;
 const diff = DeepDiff.diff;
 /**
@@ -11,7 +11,7 @@ export default class EditHistory {
    */
   constructor(obj) {
     this.obj = JSON.parse(JSON.stringify(obj));
-    
+
     // initialize arrays for forwards and backwards patches
     this.forward = [];
     this.backward = [];
@@ -36,9 +36,8 @@ export default class EditHistory {
     };
 
     if (!patch.redo || !patch.undo) {
-      console.warn('Objects could not be diffed');
-    }
-    else {
+      console.warn("Objects could not be diffed");
+    } else {
       this.obj = JSON.parse(JSON.stringify(newObj));
       this.backward.push(patch);
     }
@@ -106,7 +105,7 @@ export default class EditHistory {
     while (this.forward.length > 0) {
       this.redo();
     }
-    
+
     return this.obj;
   }
 }
