@@ -4,7 +4,7 @@
 ## [Demo](https://bsssshhhhhhh.github.io/svelte-data-grid-demo/)
 
 
-Svelte Data Grid is a svelte v2 component for displaying and editing any amount of data.
+Svelte Data Grid is a svelte v3 component for displaying and editing any amount of data.
 
 ## Features:
  - Excellent scrolling performance
@@ -21,11 +21,13 @@ Svelte Data Grid is a svelte v2 component for displaying and editing any amount 
 
 If using from inside a svelte component: 
 ```
-<DataGrid rows={myRows} allowColumnReordering={false} columns={myColumnDefinitions} on:columnOrderUpdated="saveNewColumnOrder()">
+import DataGrid from "svelte-data-grid";
+<DataGrid rows={myRows} allowColumnReordering={false} columns={myColumnDefinitions} on:columnOrderUpdated={saveNewColumnOrder}>
 ```
 
 If using from outside svelte:
 ```
+import DataGrid from "svelte-data-grid";
 const grid = new DataGrid({
   target: document.querySelector('#my-grid-wrapper'),
   data: {
@@ -35,12 +37,12 @@ const grid = new DataGrid({
   }
 });
 
-grid.on('columnOrderUpdated', () => {
+grid.$on('columnOrderUpdated', () => {
   const { columns } = grid.get();
   // save new column  order
 });
 ```
-To learn more about using DataGrid outside of svelte, read [svelte's guide](https://svelte.technology/guide#component-api) on how to interact with a svelte component. It is possible to integrate into any framework.
+To learn more about using DataGrid outside of svelte, read [svelte's guide](https://svelte.dev/docs#Component_format) on how to interact with a svelte component. It is possible to integrate into any framework.
 
 DataGrid requires 2 properties to be passed in order to display data: `rows` and `columns`.
 
@@ -90,9 +92,9 @@ Version 2 adds early support for editing data. Due to the lack of using a keyed 
 
 Import the components:
 ```
-import TextboxCell from 'svelte-data-grid/src/textbox-cell.html';
-import SelectCell from 'svelte-data-grid/src/select-cell.html';
-import CheckboxCell from 'svelte-data-grid/src/checkbox-cell.html';
+import TextboxCell from 'svelte-data-grid/src/textbox-cell.svelte';
+import SelectCell from 'svelte-data-grid/src/select-cell.svelte';
+import CheckboxCell from 'svelte-data-grid/src/checkbox-cell.svelte';
 ```
 
 ### Textbox Cell
@@ -154,29 +156,25 @@ Components will be passed the following properties:
 - `column` - The entire column object from `columns`
 
 
-MyCustomCell.html
+MyCustomCell.svelte
 ```
-<div style="color: {colors[row.data[column.dataName]] || 'black'};">
-  {row.data[column.dataName]}
-</div>
-
 <script>
-export default {
-  data() {
-    return {
-      colors: {
-        Red: '#FF0000',
-        Blue: '#0000FF'
-      }
-    };
+export let data = {
+  colors: {
+    Red: '#FF0000',
+    Blue: '#0000FF'
   }
 };
 </script>
+
+<div style="color: {colors[row.data[column.dataName]] || 'black'};">
+  {row.data[column.dataName]}
+</div>
 ```
 
 Import the component
 ```
-import MyCustomCell from './MyCustomCell.html';
+import MyCustomCell from './MyCustomCell.svelte';
 ```
 
 `columns` option:
