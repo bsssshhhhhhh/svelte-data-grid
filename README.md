@@ -42,7 +42,7 @@ grid.$on('columnOrderUpdated', () => {
   // save new column  order
 });
 ```
-To learn more about using DataGrid outside of svelte, read [svelte's guide](https://svelte.dev/docs#Component_format) on how to interact with a svelte component. It is possible to integrate into any framework.
+To learn more about using DataGrid outside of svelte, read [svelte's guide](https://svelte.dev/docs#Client-side_component_API) on how to interact with a svelte component. It is possible to integrate into any framework.
 
 DataGrid requires 2 properties to be passed in order to display data: `rows` and `columns`.
 
@@ -88,7 +88,7 @@ DataGrid requires 2 properties to be passed in order to display data: `rows` and
 
 ## Editing Data
 
-Version 2 adds early support for editing data. Due to the lack of using a keyed each block to render the rows, maintaining focus on controls as the user scrolls is a tad wonky. This will be resolved in a future version.
+Version 2 added early support for editing data. Due to the lack of using a keyed each block to render the rows, maintaining focus on controls as the user scrolls is a tad wonky. This will be resolved in a future version.
 
 Import the components:
 ```
