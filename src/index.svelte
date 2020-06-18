@@ -1,7 +1,6 @@
 <script>
   import { onMount, afterUpdate } from "svelte";
   import EditHistory from "./edit-history";
-  import * as deepDiff from "deep-diff";
   import { createEventDispatcher } from "svelte";
 
   const dispatch = createEventDispatcher();
@@ -138,14 +137,14 @@
 
   export let __extraRows = 0; // Number of extra rows to render beyond what is visible in the scrollable area
   export let __columnHeaderResizeCaptureWidth = 20; // The width of the area on column borders that can be clicked to resize the column
-  /**** Do not modify any of the data variables below ****/
-  export let __affixedRowIndices = []; // DO NOT MODIFY DIRECTLY. The row indices to affix to the top of the grid
+  /**** Do not modify any of the data variables below. Some of them are temporarily commented out to hide warnings. ****/
+  // export let __affixedRowIndices = []; // DO NOT MODIFY DIRECTLY. The row indices to affix to the top of the grid
   export let __affixedColumnIndices = []; // DO NOT MODIFY DIRECTLY. The column indices to affix to the left side of the grid
   export let __affixingRow = false; // DO NOT MODIFY DIRECTLY. Whether a row affix operation is in progress
   export let __affixingColumn = false; // DO NOT MODIFY DIRECTLY. Whether a column affix operation is in progress
   export let __rowActionLineTop = 0; // DO NOT MODIFY DIRECTLY. The 'top' position of the row action line
   export let __rowAffixLineTop = 0; // DO NOT MODIFY DIRECTLY. The 'top' position of the row affix line
-  export let __columnAffixLineLeft = 0; // DO NOT MODIFY DIRECTLY. The 'left' position of the column affix line
+  // export let __columnAffixLineLeft = 0; // DO NOT MODIFY DIRECTLY. The 'left' position of the column affix line
   export let __columnDragging = false; // DO NOT MODIFY DIRECTLY. Whether a column is being dragged
   export let __columnIndexBeingDragged = null; // DO NOT MODIFY DIRECTLY. The column index that is being dragged
   export let __columnDragOffsetX = 0; // DO NOT MODIFY DIRECTLY. The X offset of where the user clicked on the column header

@@ -19,7 +19,12 @@ Svelte Data Grid is a svelte v3 component for displaying and editing any amount 
 
 ## Usage:
 
-If using from inside a svelte component: 
+If using within Sapper:
+```
+npm install svelte-data-grid --save-dev
+```
+
+If using from inside a svelte component:
 ```
 import DataGrid from "svelte-data-grid";
 <DataGrid rows={myRows} allowColumnReordering={false} columns={myColumnDefinitions} on:columnOrderUpdated={saveNewColumnOrder}>
@@ -66,7 +71,7 @@ DataGrid requires 2 properties to be passed in order to display data: `rows` and
 ```
 
 
-`rows` is an array of objects containing the data for each table row. 
+`rows` is an array of objects containing the data for each table row.
 
 ```
 [
@@ -150,7 +155,7 @@ CheckboxCell will set the checked state of the checkbox depending on the boolean
 
 Need to customize how your data is displayed or build more complex functionality into your grid? Specify `cellComponent` in your definition in the `columns` property.
 
-Components will be passed the following properties: 
+Components will be passed the following properties:
 - `rowNumber` - The index of the row within `rows`
 - `row` - The entire row object from `rows`
 - `column` - The entire column object from `columns`
@@ -211,7 +216,7 @@ Svelte Data Grid provides a few options for controlling the grid and its interac
 
 ## Column Affixing
 
-This feature works well on Chrome because Chrome's scroll events are not fired asynchronously from the scroll action. Firefox, Edge, and IE all fire scroll events *after* the overflow container has scroll on screen. This causes a jittery effect that we cannot easily work around while providing a cross-browser solution. 
+This feature works well on Chrome because Chrome's scroll events are not fired asynchronously from the scroll action. Firefox, Edge, and IE all fire scroll events *after* the overflow container has scroll on screen. This causes a jittery effect that we cannot easily work around while providing a cross-browser solution.
 
 To fix the jitteriness on Firefox, a setting in about:config can be changed to turn off APZ. Set `layers.async-pan-zoom.enabled` to `false`. Obviously this is not a solution we can reasonably ask users to try, so I'm looking for other solutions.
 
