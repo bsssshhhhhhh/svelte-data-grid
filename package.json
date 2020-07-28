@@ -1,14 +1,14 @@
 {
   "name": "svelte-data-grid",
   "description": "High-performance svelte data table component for displaying huge datasets",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "author": {
     "name": "Brian Simon",
     "email": "bsssshhhhhhh@gmail.com",
     "url": "https://github.com/bsssshhhhhhh"
   },
   "homepage": "https://github.com/bsssshhhhhhh/svelte-data-grid",
-  "svelte": "src/index.svelte",
+  "svelte": "src/main.svelte",
   "module": "index.mjs",
   "main": "index.js",
   "scripts": {
@@ -17,11 +17,11 @@
     "prepublishOnly": "npm run build"
   },
   "devDependencies": {
-    "rollup": "^1.27.14",
+    "@rollup/plugin-node-resolve": "^8.0.1",
+    "rollup": "^2.17.1",
     "rollup-plugin-commonjs": "^10.1.0",
-    "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-svelte": "^5.1.1",
-    "svelte": "^3.16.7"
+    "svelte": "^3.23.2"
   },
   "keywords": [
     "svelte",
@@ -40,6 +40,6 @@
   "dependencies": {
     "debounce": "^1.2.0",
     "deep-diff": "^1.0.2",
-    "detect-browser": "^4.8.0"
+    "detect-browser": "^5.0.0"
   }
 }
